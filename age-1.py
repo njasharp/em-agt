@@ -1,13 +1,8 @@
 import streamlit as st
-#from dotenv import load_dotenv
 import os
 from groq import Groq
-import re
 
 # Load environment variables
-#load_dotenv()
-
-# Initialize the Groq client with the API key
 groq_api_key = os.getenv("GROQ_API_KEY")
 if not groq_api_key:
     st.error("GROQ_API_KEY not found in environment variables!")
@@ -32,8 +27,8 @@ class Agent:
 
     def execute(self):
         completion = self.client.chat.completions.create(
-            model=model_choice,  # Use the selected model from the sidebar
-            temperature=temperature_setting,  # Use the selected temperature from the sidebar
+            model=model_choice,
+            temperature=temperature_setting,
             messages=self.messages
         )
         return completion.choices[0].message.content
@@ -57,7 +52,7 @@ def get_planet_mass(planet: str) -> float:
 
 st.set_page_config(layout="wide")
 # Sidebar settings for model and temperature
-st.sidebar.image("p2.png")  # Displaying the uploaded image in the sidebar
+st.sidebar.image("p2.png")
 st.sidebar.header("Model Settings")
 
 # Define model choices and their corresponding IDs
@@ -73,7 +68,7 @@ model_dict = {
 # Dropdown for selecting model
 model_choice_label = st.sidebar.selectbox(
     "Select a model",
-    list(model_dict.keys())  # Display labels
+    list(model_dict.keys())
 )
 
 # Get the selected model's ID from the dictionary
@@ -84,13 +79,9 @@ temperature_setting = st.sidebar.slider(
     "Set Model Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.01
 )
 
-# Toggle for Email Reply Agent
+# Toggles for enabling tools
 enable_email_reply = st.sidebar.checkbox("Enable Email Reply Agent")
-
-# Toggle for get_planet_mass Agent
 enable_get_planet_mass = st.sidebar.checkbox("Enable Get Planet Mass Tool")
-
-# Toggle for calculate Agent
 enable_calculate = st.sidebar.checkbox("Enable Calculate Tool")
 
 # Email agent system prompt
@@ -108,20 +99,16 @@ Output Format:
 When providing an output, don't use "Subject:" or "Body:", just output the relevant text for each section.
 """
 
-# Decide which system prompt to use based on the toggle
-if enable_email_reply:
-    system_prompt = email_agent_system_prompt
-    st.sidebar.markdown("**Email Agent is enabled.**")
-else:
-    # Default system prompt for other queries
-    system_prompt = """
+# System prompt based on toggle
+system_prompt = email_agent_system_prompt if enable_email_reply else """
     You run in a loop of Thought, Action, PAUSE, Observation.
     At the end of the loop you output an Answer...
     """.strip()
 
-st.image("p1.png")  # Displaying the uploaded image in the sidebar
+st.image("p1.png")
 st.title("email reply tool")
-# Main layout
+
+# Main layout logic
 if enable_email_reply:
     col1, col2 = st.columns(2)
 
@@ -136,7 +123,7 @@ if enable_email_reply:
                 if not groq_api_key:
                     st.error("Cannot send query because GROQ_API_KEY is missing.")
                 else:
-                    # Initialize agent with the selected model and system prompt
+                    # Initialize agent
                     agent = Agent(client=client, system=system_prompt)
                     response = agent(email_input)
                     st.text_area("Response", value=response, height=600, key="response_email")
@@ -145,13 +132,17 @@ if enable_email_reply:
 else:
     query = st.text_input("Enter your query here...", key="general_query")
 
-    # Button to send the query
+    if enable_get_planet_mass:
+        planet_input = st.text_input("Enter planet name:", key="planet_input")
+    
+    if enable_calculate:
+        calculation_input = st.text_input("Enter calculation:", key="calculation_input")
+
     if st.button("Send"):
         if query:
             if not groq_api_key:
                 st.error("Cannot send query because GROQ_API_KEY is missing.")
             else:
-                # Check for the Get Planet Mass or Calculate tool, otherwise use normal agent behavior
                 if enable_get_planet_mass:
                     st.write(f"Planet Mass: {get_planet_mass(planet_input)}")
                 elif enable_calculate:
@@ -160,7 +151,6 @@ else:
                     except Exception as e:
                         st.write(f"Error in calculation: {e}")
                 else:
-                    # Initialize agent with the selected model and system prompt
                     agent = Agent(client=client, system=system_prompt)
                     response = agent(query)
                     st.text_area("Response", value=response, height=200, key="general_response")
@@ -170,7 +160,7 @@ else:
 st.markdown("#### System Prompt")
 st.text_area("System Prompt", system_prompt, height=200, key="system_prompt")
 
-# Footer with build details
+# Footer
 st.markdown(
     """
     <footer>
