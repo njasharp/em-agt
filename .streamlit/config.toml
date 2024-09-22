@@ -1,0 +1,9 @@
+[theme]
+# Defines the color of buttons and other primary interactive elements.
+primaryColor = "#1E90FF"  # A lighter blue for interactive elements
+# Customize the background of your app for dark mode.
+backgroundColor = "#121212"  # Dark background color
+secondaryBackgroundColor = "#1F1F1F"  # Slightly lighter dark for contrast
+textColor = "#E0E0E0"  # Light text color for readability on dark background
+# Sets a consistent font for all text elements in the app.
+font = "monospace"
