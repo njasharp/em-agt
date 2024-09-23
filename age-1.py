@@ -1,9 +1,12 @@
 import streamlit as st
 import os
+import requests
 from groq import Groq
 
 # Load environment variables
 groq_api_key = os.getenv("GROQ_API_KEY")
+serpapi_key = os.getenv("SERPAPI_KEY")
+
 if not groq_api_key:
     st.error("GROQ_API_KEY not found in environment variables!")
 else:
@@ -32,6 +35,19 @@ class Agent:
             messages=self.messages
         )
         return completion.choices[0].message.content
+
+# Define the SerpApi Web Search Agent
+def search_web(query):
+    search_url = f"https://serpapi.com/search"
+    params = {
+        "q": query,
+        "api_key": serpapi_key
+    }
+    response = requests.get(search_url, params=params)
+    if response.status_code == 200:
+        return response.json()["organic_results"]  # Assuming 'organic_results' contains the search results
+    else:
+        return f"Error: Unable to complete search (Status code: {response.status_code})"
 
 # Define the available tools
 def calculate(operation: str) -> float:
@@ -83,6 +99,7 @@ temperature_setting = st.sidebar.slider(
 enable_email_reply = st.sidebar.checkbox("Enable Email Reply Agent")
 enable_get_planet_mass = st.sidebar.checkbox("Enable Get Planet Mass Tool")
 enable_calculate = st.sidebar.checkbox("Enable Calculate Tool")
+enable_web_search = st.sidebar.checkbox("Enable Web Search Agent")
 
 # Email agent system prompt
 email_agent_system_prompt = """
@@ -106,7 +123,7 @@ system_prompt = email_agent_system_prompt if enable_email_reply else """
     """.strip()
 
 st.image("p1.png")
-st.title("email reply tool")
+st.title("Email Reply Tool & Web Search Agent")
 
 # Main layout logic
 if enable_email_reply:
@@ -129,6 +146,22 @@ if enable_email_reply:
                     st.text_area("Response", value=response, height=600, key="response_email")
             else:
                 st.warning("Please enter an email.")
+elif enable_web_search:
+    st.write("Web Search")
+    search_query = st.text_input("Enter your search query here...", key="search_query")
+    
+    if st.button("Search"):
+        if search_query:
+            search_results = search_web(search_query)
+            if isinstance(search_results, str):
+                st.error(search_results)
+            else:
+                st.write("Search Results:")
+                for idx, result in enumerate(search_results, start=1):
+                    st.write(f"{idx}. [{result['title']}]({result['link']})")
+                    st.write(result.get("snippet", "No description available"))
+        else:
+            st.warning("Please enter a search query.")
 else:
     query = st.text_input("Enter your query here...", key="general_query")
 
