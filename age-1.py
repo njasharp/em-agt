@@ -123,7 +123,7 @@ system_prompt = email_agent_system_prompt if enable_email_reply else """
     """.strip()
 
 st.image("p1.png")
-st.title("Email Reply Tool & Web Search Agent")
+st.write("Email Reply Tool & Web Search Agent")
 
 # Main layout logic
 if enable_email_reply:
